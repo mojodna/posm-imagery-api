@@ -36,9 +36,10 @@ celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
 
 # Initialize Tus
-tm = tus_manager(app, upload_url='/imagery/upload', upload_folder='uploads/')
-# TODO fix Location header in source library (too many /s)
-# TODO overwrite tus_max_file_size to support big files
+tm = tus_manager(app, upload_url='/imagery/upload',
+    upload_folder=app.config['UPLOADED_IMAGERY_DEST'])
+# overwrite tus_max_file_size to support big(ger) files
+tm.tus_max_file_size = 17179869184 # 16GB
 
 from flask import current_app
 
