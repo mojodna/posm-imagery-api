@@ -144,7 +144,7 @@ class tus_manager(object):
                 return response
 
             response.status_code = 201
-            response.headers['Location'] = '{}/{}/{}'.format(request.url_root, self.upload_url, resource_id)
+            response.headers['Location'] = '{}/{}/{}'.format(request.url_root[:-1], self.upload_url[1:], resource_id)
             response.headers['Tus-Temp-Filename'] = resource_id
             response.autocorrect_location_header = False
 
