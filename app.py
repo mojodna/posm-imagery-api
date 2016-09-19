@@ -72,6 +72,7 @@ def initialize_imagery(id, source_path):
 
 @celery.task(bind=True)
 def place_file(self, id, source_path):
+    os.mkdir('{}/{}'.format(IMAGERY_PATH, id))
     output_file = '{}/{}/index.tif'.format(IMAGERY_PATH, id)
 
     # rewrite with gdal_translate
