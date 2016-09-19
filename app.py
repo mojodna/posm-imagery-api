@@ -36,7 +36,30 @@ celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
 
 # Initialize Tus
-tm = tus_manager(app, upload_url='/images', upload_folder='uploads/')
+tm = tus_manager(app, upload_url='/imagery/upload', upload_folder='uploads/')
+# TODO fix Location header in source library (too many /s)
+# TODO overwrite tus_max_file_size to support big files
+
+from flask import current_app
+
+@tm.upload_file_handler
+def upload_file_hander(upload_file_path, filename):
+    id = os.path.basename(upload_file_path)
+    task_info = '{}/{}/ingest.task'.format(IMAGERY_PATH, id)
+    os.mkdir(os.path.dirname(task_info))
+
+    task = initialize_imagery(id, upload_file_path).apply_async()
+
+    while task.parent is not None:
+        task = task.parent
+
+    # stash task.id in the imagery directory so we know which task to look up
+    f = open(task_info, 'w')
+    f.write(task.id)
+    f.close()
+
+    # this is semi-correct; it's true until the worker runs
+    return filename
 
 
 def initialize_imagery(id, source_path):
