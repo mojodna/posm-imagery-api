@@ -2,6 +2,7 @@ cachetools
 celery==4.0.0rc4
 flask
 Flask-Script
+Flask-Uploads
 mercantile
 numpy
 Pillow

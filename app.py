@@ -9,10 +9,12 @@ from StringIO import StringIO
 import subprocess32 as subprocess
 import time
 import os
+import uuid
 
 from cachetools.func import lru_cache, rr_cache
 from celery import Celery, chain, group, states
-from flask import Flask, request, send_from_directory, jsonify, url_for
+from flask import Flask, redirect, request, send_from_directory, jsonify, url_for
+from flask_uploads import UploadSet, configure_uploads
 from flask_tus import tus_manager
 import mercantile
 from mercantile import Tile
@@ -30,6 +32,7 @@ app = Flask(__name__)
 app.config['CELERY_BROKER_URL'] = os.environ.get('CELERY_BROKER_URL', 'redis://')
 app.config['CELERY_RESULT_BACKEND'] = os.environ.get('CELERY_RESULT_BACKEND', 'redis://')
 app.config['USE_X_SENDFILE'] = os.environ.get('USE_X_SENDFILE', False)
+app.config['UPLOADED_IMAGERY_DEST'] = os.environ.get('UPLOADED_IMAGERY_DEST', 'uploads/')
 
 # Initialize Celery
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
@@ -41,11 +44,14 @@ tm = tus_manager(app, upload_url='/imagery/upload',
 # overwrite tus_max_file_size to support big(ger) files
 tm.tus_max_file_size = 17179869184 # 16GB
 
-from flask import current_app
+# Initialize Flask-Uploads
+imagery = UploadSet('imagery', ('tif', 'tiff'))
+configure_uploads(app, (imagery,))
+
 
 @tm.upload_file_handler
-def upload_file_hander(upload_file_path, filename):
-    id = os.path.basename(upload_file_path)
+def upload_file_handler(upload_file_path, filename=None):
+    id = str(uuid.uuid4())
     task_info = '{}/{}/ingest.task'.format(IMAGERY_PATH, id)
     os.mkdir(os.path.dirname(task_info))
 
@@ -59,8 +65,7 @@ def upload_file_hander(upload_file_path, filename):
     f.write(task.id)
     f.close()
 
-    # this is semi-correct; it's true until the worker runs
-    return filename
+    return id
 
 
 def initialize_imagery(id, source_path):
@@ -73,8 +78,10 @@ def initialize_imagery(id, source_path):
 
 @celery.task(bind=True)
 def place_file(self, id, source_path):
-    os.mkdir('{}/{}'.format(IMAGERY_PATH, id))
-    output_file = '{}/{}/index.tif'.format(IMAGERY_PATH, id)
+    target_dir = '{}/{}'.format(IMAGERY_PATH, id)
+    if not os.path.exists(target_dir):
+        os.mkdir(target_dir)
+    output_file = '{}/index.tif'.format(target_dir)
 
     # rewrite with gdal_translate
     gdal_translate = [
@@ -440,6 +447,15 @@ def list_imagery():
     """List available imagery"""
     sources = os.listdir(IMAGERY_PATH)
     return jsonify(sources), 200
+
+
+@app.route('/imagery/upload', methods=['PUT'])
+def upload_imagery():
+    filename = app.config['UPLOADED_IMAGERY_DEST'] + imagery.save(request.files['imagery'])
+
+    id = upload_file_handler(filename)
+
+    return redirect(url_for('get_imagery_metadata', id=id))
 
 
 @app.route('/imagery/<id>', methods=['GET'])
