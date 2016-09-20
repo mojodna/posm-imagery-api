@@ -24,6 +24,7 @@ import rasterio
 from rasterio.warp import transform_bounds
 
 
+# TODO strip slashes if necessary
 IMAGERY_PATH = os.environ.get('IMAGERY_PATH', 'imagery')
 MIN_ZOOM = int(os.environ.get('MIN_ZOOM', 0))
 MAX_ZOOM = int(os.environ.get('MAX_ZOOM', 22))
@@ -32,6 +33,7 @@ app = Flask(__name__)
 app.config['CELERY_BROKER_URL'] = os.environ.get('CELERY_BROKER_URL', 'redis://')
 app.config['CELERY_RESULT_BACKEND'] = os.environ.get('CELERY_RESULT_BACKEND', 'redis://')
 app.config['USE_X_SENDFILE'] = os.environ.get('USE_X_SENDFILE', False)
+# TODO add slashes if necessary
 app.config['UPLOADED_IMAGERY_DEST'] = os.environ.get('UPLOADED_IMAGERY_DEST', 'uploads/')
 
 # Initialize Celery
