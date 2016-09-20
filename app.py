@@ -466,11 +466,6 @@ def get_imagery_metadata(id):
     return jsonify(get_metadata(id)), 200
 
 
-@app.route('/imagery/<id>/status', methods=['GET'])
-def get_imagery_status(id):
-    pass
-
-
 @app.route('/imagery/<id>/<int:z>/<int:x>/<int:y>.png', methods=['GET'])
 def get_tile(id, z, x, y):
     tile = read_tile(id, Tile(x, y, z))
@@ -556,31 +551,6 @@ def get_mbtiles_status(id):
         task_id = t.read()
 
     return serialize_status(task_id), 200
-
-
-@app.route('/imagery/<id>/ingest', methods=['POST'])
-def ingest_imagery(id):
-    task_info = '{}/{}/ingest.task'.format(IMAGERY_PATH, id)
-
-    if os.path.exists(task_info):
-        return jsonify({
-            'message': 'Ingestion already in progress'
-        }), 400
-
-    # TODO this is a dummy value; this should occur after something has been uploaded
-    task = initialize_imagery(id, '{}/{}/source.tif'.format(IMAGERY_PATH, id)).apply_async()
-
-    while task.parent is not None:
-        task = task.parent
-
-    # stash task.id in the imagery directory so we know which task to look up
-    f = open(task_info, 'w')
-    f.write(task.id)
-    f.close()
-
-    return '', 202, {
-        'Location': url_for('get_ingestion_status', id=id)
-    }
 
 
 @app.route('/imagery/<id>/ingest/status', methods=['GET'])
