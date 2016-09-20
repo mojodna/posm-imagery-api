@@ -451,7 +451,7 @@ def list_imagery():
 
 @app.route('/imagery/upload', methods=['PUT'])
 def upload_imagery():
-    filename = app.config['UPLOADED_IMAGERY_DEST'] + imagery.save(request.files['imagery'])
+    filename = app.config['UPLOADED_IMAGERY_DEST'] + imagery.save(request.files['file'])
 
     id = upload_file_handler(filename)
 
