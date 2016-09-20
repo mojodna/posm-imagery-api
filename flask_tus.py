@@ -64,7 +64,7 @@ class tus_manager(object):
 
     # handle redis server connection
     def redis_connect(self):
-        return redis.Redis()
+        return redis.from_url(os.environ.get('REDIS_URL', 'redis://'))
 
     @property
     def redis_connection(self):
