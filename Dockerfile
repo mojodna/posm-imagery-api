@@ -21,6 +21,10 @@ RUN apt-get update && \
     python-wheel \
     software-properties-common \
     wget && \
+  wget -q -O - https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
+  add-apt-repository -s "deb https://deb.nodesource.com/node_4.x $(lsb_release -c -s) main" && \
+  apt-get update && \
+  apt-get install --no-install-recommends -y nodejs && \
   apt-get clean
 
 COPY package.json /app/package.json
@@ -33,13 +37,8 @@ RUN pip install -U numpy && \
   pip install -U gevent gunicorn && \
   rm -rf /root/.cache
 
-RUN wget -q -O - https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
-  add-apt-repository -s "deb https://deb.nodesource.com/node_4.x $(lsb_release -c -s) main" && \
-  apt-get update && \
-  apt-get install --no-install-recommends -y nodejs && \
-  apt-get clean
-
-RUN npm install
+RUN npm install && \
+  rm -rf /root/.npm
 
 COPY . /app
 
