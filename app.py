@@ -41,6 +41,7 @@ celery.conf.update(app.config)
 # Initialize Tus
 tm = tus_manager(app, upload_url='/imagery/upload',
     upload_folder=app.config['UPLOADED_IMAGERY_DEST'])
+
 # overwrite tus_max_file_size to support big(ger) files
 tm.tus_max_file_size = 17179869184 # 16GB
 
@@ -194,8 +195,7 @@ def create_overviews(self, id):
     # create external overviews
     gdaladdo = [
         'gdaladdo',
-        '-r',
-        'cubic',
+        '-r', 'cubic',
         '--config', 'GDAL_TIFF_OVR_BLOCKSIZE', '256',
         '--config', 'TILED_OVERVIEW', 'yes',
         '--config', 'COMPRESS_OVERVIEW', 'DEFLATE',
