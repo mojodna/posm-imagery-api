@@ -110,7 +110,16 @@ def place_file(self, id, source_path):
                         'status': 'Rewriting imagery'
                       })
 
-    returncode = subprocess.call(gdal_translate, timeout=60*5)
+    try:
+        returncode = subprocess.call(gdal_translate, timeout=60*5)
+    except subprocess.TimeoutExpired as e:
+        raise Exception(json.dumps({
+            'name': 'overviews',
+            'started_at': started_at.isoformat(),
+            'command': ' '.join(gdal_translate),
+            'return_code': returncode,
+            'status': 'Timed out'
+        }))
 
     if returncode != 0:
         raise Exception(json.dumps({
@@ -223,7 +232,16 @@ def create_overviews(self, id):
                         'status': 'Creating external overviews'
                       })
 
-    returncode = subprocess.call(gdaladdo, timeout=60*5)
+    try:
+        returncode = subprocess.call(gdaladdo, timeout=60*5)
+    except subprocess.TimeoutExpired as e:
+        raise Exception(json.dumps({
+            'name': 'overviews',
+            'started_at': started_at.isoformat(),
+            'command': ' '.join(gdaladdo),
+            'return_code': returncode,
+            'status': 'Timed out'
+        }))
 
     if returncode != 0:
         raise Exception(json.dumps({
@@ -276,7 +294,16 @@ def create_warped_vrt(self, id):
                         'status': 'Creating warped VRT'
                       })
 
-    returncode = subprocess.call(gdalwarp, timeout=60*5)
+    try:
+        returncode = subprocess.call(gdalwarp, timeout=60*5)
+    except subprocess.TimeoutExpired as e:
+        raise Exception(json.dumps({
+            'name': 'overviews',
+            'started_at': started_at.isoformat(),
+            'command': ' '.join(gdalwarp),
+            'return_code': returncode,
+            'status': 'Timed out'
+        }))
 
     if returncode != 0:
         raise Exception(json.dumps({
@@ -328,7 +355,16 @@ def generate_mbtiles(self, id):
 
     print('Running {}'.format(' '.join(generate_cmd)))
 
-    returncode = subprocess.call(generate_cmd, timeout=60*60)
+    try:
+        returncode = subprocess.call(generate_cmd, timeout=60*60)
+    except subprocess.TimeoutExpired as e:
+        raise Exception(json.dumps({
+            'name': 'overviews',
+            'started_at': started_at.isoformat(),
+            'command': ' '.join(generate_cmd),
+            'return_code': returncode,
+            'status': 'Timed out'
+        }))
 
     if returncode != 0:
         raise Exception(json.dumps({
