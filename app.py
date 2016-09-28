@@ -270,7 +270,7 @@ def create_warped_vrt(self, id):
     meta = get_metadata(id)
     approximate_zoom = meta['meta']['approximateZoom']
 
-    # create external overviews
+    # create a warped VRT to reproject on the fly
     gdalwarp = [
         'gdalwarp',
         raster_path,
