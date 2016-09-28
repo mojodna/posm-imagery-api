@@ -565,6 +565,7 @@ def serialize_status(task_id):
     result = celery.AsyncResult(task_id)
 
     status = {
+        # TODO result.state doesn't account for the states of all children (use the fact that they're comparable to display the lowest)
         'state': result.state,
         'steps': []
     }
