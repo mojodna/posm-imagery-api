@@ -49,4 +49,4 @@ USER nobody
 VOLUME /app/imagery
 VOLUME /app/uploads
 
-ENTRYPOINT ["gunicorn", "-k", "gevent", "-b", "0.0.0.0", "--access-logfile", "-", "app:app"]
+ENTRYPOINT ["gunicorn", "-k", "gevent", "-b", "0.0.0.0", "--timeout", "300", "--access-logfile", "-", "app:app"]
