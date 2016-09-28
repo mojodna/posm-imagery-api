@@ -1,0 +1,29 @@
+version: '2'
+services:
+  web:
+    build: .
+    environment:
+      - CELERY_BROKER_URL=redis://redis/
+      - CELERY_RESULT_BACKEND=redis://redis/
+      - REDIS_URL=redis://redis/
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./imagery:/app/imagery
+      - ./uploads:/app/uploads
+    depends_on:
+      - redis
+  worker:
+    build: .
+    entrypoint: celery
+    command: worker -A app.celery --loglevel=info
+    environment:
+      - CELERY_BROKER_URL=redis://redis/
+      - CELERY_RESULT_BACKEND=redis://redis/
+    volumes:
+      - ./imagery:/app/imagery
+      - ./uploads:/app/uploads
+    depends_on:
+      - redis
+  redis:
+    image: redis
