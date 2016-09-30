@@ -58,9 +58,14 @@ docker run \
 
 ## Developing
 
-It's probably easier to develop against a local copy rather than puzzle through Docker indirection.
-To set up, create a `virtualenv`, install the dependencies, and start up the API server and Celery
-workers. You'll also need a local Redis server.
+You can either run a development copy with `docker-compose`:
+
+```bash
+docker-compose up
+```
+
+...or you can develop against a local copy. To set up, create a `virtualenv`, install the
+dependencies, and start up the API server and Celery workers. You'll also need a local Redis server.
 
 Create a `virtualenv` and install dependencies:
 
