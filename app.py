@@ -24,17 +24,28 @@ import rasterio
 from rasterio.warp import transform_bounds
 
 
-# TODO strip slashes if necessary
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://')
 IMAGERY_PATH = os.environ.get('IMAGERY_PATH', 'imagery')
 MIN_ZOOM = int(os.environ.get('MIN_ZOOM', 0))
 MAX_ZOOM = int(os.environ.get('MAX_ZOOM', 22))
+SERVER_NAME = os.environ.get('SERVER_NAME', 'localhost:8000')
+USE_X_SENDFILE = os.environ.get('USE_X_SENDFILE', False)
+UPLOADED_IMAGERY_DEST = os.environ.get('UPLOADED_IMAGERY_DEST', 'uploads/')
+
+# strip trailing slash if necessary
+if IMAGERY_PATH[-1] == '/':
+    IMAGERY_PATH = IMAGERY_PATH[:-1]
+
+# add trailing slash if necessary
+if UPLOADED_IMAGERY_DEST[-1] != '/':
+    UPLOADED_IMAGERY_DEST = UPLOADED_IMAGERY_DEST[:-1]
 
 app = Flask(__name__)
-app.config['CELERY_BROKER_URL'] = os.environ.get('CELERY_BROKER_URL', 'redis://')
-app.config['CELERY_RESULT_BACKEND'] = os.environ.get('CELERY_RESULT_BACKEND', 'redis://')
-app.config['USE_X_SENDFILE'] = os.environ.get('USE_X_SENDFILE', False)
-# TODO add slashes if necessary
-app.config['UPLOADED_IMAGERY_DEST'] = os.environ.get('UPLOADED_IMAGERY_DEST', 'uploads/')
+app.config['CELERY_BROKER_URL'] = CELERY_BROKER_URL
+app.config['CELERY_RESULT_BACKEND'] = CELERY_RESULT_BACKEND
+app.config['USE_X_SENDFILE'] = USE_X_SENDFILE
+app.config['UPLOADED_IMAGERY_DEST'] = UPLOADED_IMAGERY_DEST
 
 # Initialize Celery
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
@@ -199,7 +210,7 @@ def create_overviews(self, id):
     raster_path = '{}/{}/index.tif'.format(IMAGERY_PATH, id)
     # initialize Flask
     # TODO Celery's @worker_init.connect decorator _should_ work for this
-    app.config['SERVER_NAME'] = 'localhost:8000'
+    app.config['SERVER_NAME'] = SERVER_NAME
     meta = get_metadata(id)
     approximate_zoom = meta['meta']['approximateZoom']
 
@@ -266,7 +277,7 @@ def create_warped_vrt(self, id):
     vrt_path = '{}/{}/index.vrt'.format(IMAGERY_PATH, id)
     # initialize Flask
     # TODO Celery's @worker_init.connect decorator _should_ work for this
-    app.config['SERVER_NAME'] = 'localhost:5000'
+    app.config['SERVER_NAME'] = SERVER_NAME
     meta = get_metadata(id)
     approximate_zoom = meta['meta']['approximateZoom']
 
@@ -327,7 +338,7 @@ def generate_mbtiles(self, id):
 
     # initialize Flask
     # TODO Celery's @worker_init.connect decorator _should_ work for this
-    app.config['SERVER_NAME'] = 'localhost:8000'
+    app.config['SERVER_NAME'] = SERVER_NAME
 
     meta = get_metadata(id)
 

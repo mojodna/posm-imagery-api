@@ -20,10 +20,12 @@ services:
     environment:
       - CELERY_BROKER_URL=redis://redis/
       - CELERY_RESULT_BACKEND=redis://redis/
+      - SERVER_NAME=web:8000
     volumes:
       - ./imagery:/app/imagery
       - ./uploads:/app/uploads
     depends_on:
       - redis
+      - web
   redis:
     image: redis

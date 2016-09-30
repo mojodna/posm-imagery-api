@@ -129,6 +129,7 @@ list_routes`.
   port, default database).
 * `REDIS_URL` - Flask-Tus backend. Defaults to `redis://` (`localhost`, default port, default
   database).
+* `SERVER_NAME` - Local server name, for use when generating MBTiles. Defaults to `localhost:8000`.
 * `USE_X_SENDFILE` - Whether Flask should use `X-Sendfile` to defer file serving to a proxying web
   server (this requires that the web server and API server are running on the same "server", so
   Docker won't work). Defaults to `False`.
