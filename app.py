@@ -178,6 +178,7 @@ def create_metadata(self, id):
             height = src.meta['height']
 
             bounds = transform_bounds(src.crs, {'init': 'epsg:4326'}, *src.bounds)
+            bandCount = src.count
 
     self.update_state(meta={
                         'name': 'metadata',
@@ -192,6 +193,7 @@ def create_metadata(self, id):
             'bounds': bounds,
             'meta': {
                 'approximateZoom': zoom,
+                'bandCount': bandCount,
                 'width': width,
                 'height': height
             }
@@ -293,8 +295,11 @@ def create_warped_vrt(self, id):
         '-of', 'VRT',
         '-te', '-20037508.34', '-20037508.34', '20037508.34', '20037508.34',
         '-ts', str(2 ** approximate_zoom * 256), str(2 ** approximate_zoom * 256),
-        '-dstalpha',
     ]
+
+    # add an alpha band (for NODATA) if one wasn't already included
+    if meta['meta']['bandCount'] < 4:
+        gdalwarp.append('-dstalpha')
 
     started_at = datetime.utcnow()
 
