@@ -327,7 +327,7 @@ def generate_mbtiles(self, id):
 
     # initialize Flask
     # TODO Celery's @worker_init.connect decorator _should_ work for this
-    app.config['SERVER_NAME'] = 'localhost:5000'
+    app.config['SERVER_NAME'] = 'localhost:8000'
 
     meta = get_metadata(id)
 
