@@ -3,11 +3,8 @@
 from datetime import datetime
 import json
 import math
-import random
-import shutil
 from StringIO import StringIO
 import subprocess32 as subprocess
-import time
 import os
 import uuid
 
