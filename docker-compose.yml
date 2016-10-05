@@ -3,8 +3,6 @@ services:
   web:
     build: .
     environment:
-      - CELERY_BROKER_URL=redis://redis/
-      - CELERY_RESULT_BACKEND=redis://redis/
       - REDIS_URL=redis://redis/
     ports:
       - "8000:8000"
@@ -18,8 +16,7 @@ services:
     entrypoint: celery
     command: worker -A app.celery --loglevel=info
     environment:
-      - CELERY_BROKER_URL=redis://redis/
-      - CELERY_RESULT_BACKEND=redis://redis/
+      - REDIS_URL=redis://redis/
       - SERVER_NAME=web:8000
     volumes:
       - ./imagery:/app/imagery

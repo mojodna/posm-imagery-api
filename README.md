@@ -27,8 +27,6 @@ docker run \
   -it \
   --rm \
   -e WEB_CONCURRENCY=8 \
-  -e CELERY_BROKER_URL="redis://${ip}/" \
-  -e CELERY_RESULT_BACKEND="redis://${ip}/" \
   -e REDIS_URL="redis://${ip}/" \
   -v $(pwd)/imagery:/app/imagery \
   -v $(pwd)/uploads:/app/uploads \
@@ -45,8 +43,7 @@ ip=$(ipconfig getifaddr en0 || ipconfig getifaddr en1)
 docker run \
   -it \
   --rm \
-  -e CELERY_BROKER_URL="redis://${ip}/" \
-  -e CELERY_RESULT_BACKEND="redis://${ip}/" \
+  -e REDIS_URL="redis://${ip}/" \
   -v $(pwd)/imagery:/app/imagery \
   -v $(pwd)/uploads:/app/uploads \
   --entrypoint celery \
@@ -123,10 +120,8 @@ list_routes`.
   directory).
 * `MIN_ZOOM` - Minimum zoom served up by the tile server. Defaults to `0`.
 * `MAX_ZOOM` - Maximum zoom served up by the tile server. Defaults to `22`.
-* `CELERY_BROKER_URL` - Celery broker URL. Defaults to `redis://` (`localhost`, default port,
-  default database).
-* `CELERY_RESULT_BACKEND` - Celery result backend URL. Defaults to `redis://` (`localhost`, default
-  port, default database).
+* `CELERY_BROKER_URL` - Celery broker URL. Defaults to the value of `REDIS_URL`.
+* `CELERY_RESULT_BACKEND` - Celery result backend URL. Defaults to the value of `REDIS_URL`.
 * `REDIS_URL` - Flask-Tus backend. Defaults to `redis://` (`localhost`, default port, default
   database).
 * `SERVER_NAME` - Local server name, for use when generating MBTiles. Defaults to `localhost:8000`.

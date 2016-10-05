@@ -24,8 +24,9 @@ import rasterio
 from rasterio.warp import transform_bounds
 
 
-CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://')
-CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://')
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://')
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', REDIS_URL)
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', REDIS_URL)
 IMAGERY_PATH = os.environ.get('IMAGERY_PATH', 'imagery')
 MIN_ZOOM = int(os.environ.get('MIN_ZOOM', 0))
 MAX_ZOOM = int(os.environ.get('MAX_ZOOM', 22))
