@@ -75,9 +75,8 @@ def upload_file_handler(upload_file_path, filename=None):
         task = task.parent
 
     # stash task.id in the imagery directory so we know which task to look up
-    f = open(task_info, 'w')
-    f.write(task.id)
-    f.close()
+    with open(task_info, 'w') as f:
+        f.write(task.id)
 
     return id
 
@@ -568,9 +567,8 @@ def request_mbtiles(id):
     task = generate_mbtiles.s(id=id).apply_async()
 
     # stash task.id in the imagery directory so we know which task to look up
-    f = open(task_info, 'w')
-    f.write(task.id)
-    f.close()
+    with open(task_info, 'w') as f:
+        f.write(task.id)
 
     return '', 202, {
         'Location': url_for('get_mbtiles_status', id=id)
