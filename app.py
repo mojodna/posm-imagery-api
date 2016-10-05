@@ -19,8 +19,10 @@ import numpy as np
 from PIL import Image
 import rasterio
 from rasterio.warp import transform_bounds
+from werkzeug.wsgi import DispatcherMiddleware
 
 
+APPLICATION_ROOT = os.environ.get('APPLICATION_ROOT', '')
 REDIS_URL = os.environ.get('REDIS_URL', 'redis://')
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', REDIS_URL)
 CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', REDIS_URL)
@@ -612,6 +614,11 @@ def get_ingestion_status(id):
         task_id = t.read()
 
     return serialize_status(task_id), 200
+
+
+app.wsgi_app = DispatcherMiddleware(None, {
+    app.config['APPLICATION_ROOT']: app.wsgi_app
+})
 
 
 if __name__ == '__main__':

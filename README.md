@@ -113,6 +113,7 @@ list_routes`.
 
 ## Environment Variables
 
+* `APPLICATION_ROOT` - Optional application prefix. Defaults to ``.
 * `IMAGERY_PATH` - Where to store imagery on the filesystem. Must be accessible by both the API
   server and Celery workers. Defaults to `imagery` (relative to the current working directory).
 * `UPLOADED_IMAGERY_DEST` - Where to (temporarily) store uploaded imagery. Must be accessible by
