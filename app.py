@@ -173,8 +173,8 @@ def create_metadata(self, id):
 
             zoom = int(math.ceil(math.log((2 * math.pi * 6378137) /
                                           (resolution * 256)) / math.log(2)))
-            width = src.meta['width']
-            height = src.meta['height']
+            width = src.width
+            height = src.height
 
             bounds = transform_bounds(src.crs, {'init': 'epsg:4326'}, *src.bounds)
             bandCount = src.count
