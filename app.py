@@ -632,9 +632,13 @@ def serialize_status(task_ids):
         states.append(result.state)
 
         if isinstance(result.info, Exception):
-            status['steps'].append(json.loads(result.info.message))
+            info = json.loads(result.info.message)
         else:
-            status['steps'].append(result.info)
+            info = result.info
+
+        info['state'] = result.state
+
+        status['steps'].append(info)
 
     status['state'] = min(states)
 
