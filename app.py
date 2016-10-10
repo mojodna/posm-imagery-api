@@ -421,7 +421,6 @@ def generate_mbtiles(self, id):
     }
 
 
-@lru_cache()
 def get_metadata(id):
     with open(os.path.join(IMAGERY_PATH, id, 'index.json')) as metadata:
         meta = json.load(metadata)
