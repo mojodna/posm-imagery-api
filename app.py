@@ -238,6 +238,8 @@ def create_overviews(self, id):
     app.config['SERVER_NAME'] = SERVER_NAME
     meta = get_metadata(id)
     approximate_zoom = meta['meta']['approximateZoom']
+    height = meta['meta']['height']
+    width = meta['meta']['width']
 
     # create external overviews
     gdaladdo = [
@@ -257,7 +259,12 @@ def create_overviews(self, id):
     ]
 
     # generate a list of overview values
-    gdaladdo.extend([str(2 ** (x + 1)) for x in range(approximate_zoom)])
+    for x in range(approximate_zoom):
+        h = height / (2 ** (x + 1))
+        w = width / (2 ** (x + 1))
+
+        if h > 1 and w > 1:
+            gdaladdo.append(str(2 ** (x + 1)))
 
     started_at = datetime.utcnow()
 
@@ -377,7 +384,8 @@ def generate_mbtiles(self, id):
         'copy',
         '-q',
         '-b', ' '.join(map(str, meta['bounds'])),
-        '-z', str(MIN_ZOOM),
+        # TODO the delta here matches the number of overviews that should be produced, so those codepaths can be centralized and simplified
+        '-z', str(meta['meta']['approximateZoom'] - 10),
         '-Z', str(meta['meta']['approximateZoom']),
         meta['tiles'][0],
         'mbtiles://{}'.format(output_path)
@@ -482,6 +490,7 @@ class InvalidTileRequest(Exception):
 
 @rr_cache()
 def read_tile(id, tile, scale=1):
+    # TODO limit to some number of zooms beneath approximateZoom
     if not MIN_ZOOM <= tile.z <= MAX_ZOOM:
         raise InvalidTileRequest('Invalid zoom: {} outside [{}, {}]'.format(tile.z, MIN_ZOOM, MAX_ZOOM))
 
