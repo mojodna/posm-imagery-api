@@ -147,7 +147,7 @@ def place_file(self, id, source_path):
         returncode = subprocess.call(gdal_translate, timeout=60*5)
     except subprocess.TimeoutExpired as e:
         raise Exception(json.dumps({
-            'name': 'overviews',
+            'name': 'preprocess',
             'started_at': started_at.isoformat(),
             'command': ' '.join(gdal_translate),
             'return_code': returncode,
@@ -337,7 +337,7 @@ def create_warped_vrt(self, id):
         returncode = subprocess.call(gdalwarp, timeout=60*5)
     except subprocess.TimeoutExpired as e:
         raise Exception(json.dumps({
-            'name': 'overviews',
+            'name': 'warped-vrt',
             'started_at': started_at.isoformat(),
             'command': ' '.join(gdalwarp),
             'return_code': returncode,
@@ -398,7 +398,7 @@ def generate_mbtiles(self, id):
         returncode = subprocess.call(generate_cmd, timeout=60*60)
     except subprocess.TimeoutExpired as e:
         raise Exception(json.dumps({
-            'name': 'overviews',
+            'name': 'mbtiles',
             'started_at': started_at.isoformat(),
             'command': ' '.join(generate_cmd),
             'return_code': returncode,
