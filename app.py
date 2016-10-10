@@ -78,12 +78,28 @@ def upload_file_handler(upload_file_path, filename=None, remote=False):
 
     task = initialize_imagery(id, upload_file_path).apply_async()
 
-    while task.parent is not None:
+    tasks = []
+
+    while task.parent:
+        if isinstance(task, celery.GroupResult):
+            for child in task.children:
+                tasks.append(child.id)
+        else:
+            tasks.append(task.id)
         task = task.parent
 
-    # stash task.id in the imagery directory so we know which task to look up
+    tasks.append(task.id)
+    tasks.reverse()
+
+    # stash task ids in the imagery directory so we know which task(s) to look up
     with open(task_info, 'w') as f:
-        f.write(task.id)
+        f.write(json.dumps(tasks))
+
+    with open(os.path.join(IMAGERY_PATH, id, 'index.json'), 'w') as metadata:
+        metadata.write(json.dumps({
+            'tilejson': '2.1.0',
+            'name': id,
+        }))
 
     return id
 
@@ -588,28 +604,31 @@ def request_mbtiles(id):
 
     # stash task.id in the imagery directory so we know which task to look up
     with open(task_info, 'w') as f:
-        f.write(task.id)
+        f.write(json.dumps([task.id]))
 
     return '', 202, {
         'Location': url_for('get_mbtiles_status', id=id)
     }
 
 
-def serialize_status(task_id):
-    result = celery.AsyncResult(task_id)
-
+def serialize_status(task_ids):
     status = {
-        # TODO result.state doesn't account for the states of all children
-        'state': result.state,
         'steps': []
     }
 
-    for _, node in result.iterdeps(intermediate=True):
-        if hasattr(node, 'info'):
-            if isinstance(node.info, Exception):
-                status['steps'].append(json.loads(node.info.message))
-            else:
-                status['steps'].append(node.info)
+    states = []
+
+    for id in task_ids:
+        result = celery.AsyncResult(id)
+
+        states.append(result.state)
+
+        if isinstance(result.info, Exception):
+            status['steps'].append(json.loads(result.info.message))
+        else:
+            status['steps'].append(result.info)
+
+    status['state'] = min(states)
 
     return jsonify(status)
 
@@ -619,9 +638,9 @@ def get_mbtiles_status(id):
     task_info = os.path.join(IMAGERY_PATH, id, 'mbtiles.task')
 
     with open(task_info) as t:
-        task_id = t.read()
+        tasks = json.load(t)
 
-    return serialize_status(task_id), 200
+    return serialize_status(tasks), 200
 
 
 @app.route('/imagery/<id>/ingest/status')
@@ -629,9 +648,9 @@ def get_ingestion_status(id):
     task_info = os.path.join(IMAGERY_PATH, id, 'ingest.task')
 
     with open(task_info) as t:
-        task_id = t.read()
+        tasks = json.load(t)
 
-    return serialize_status(task_id), 200
+    return serialize_status(tasks), 200
 
 
 app.wsgi_app = DispatcherMiddleware(None, {
