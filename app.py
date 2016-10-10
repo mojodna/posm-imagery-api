@@ -68,10 +68,13 @@ configure_uploads(app, (imagery,))
 
 
 @tm.upload_file_handler
-def upload_file_handler(upload_file_path, filename=None):
+def upload_file_handler(upload_file_path, filename=None, remote=False):
     id = str(uuid.uuid4())
     task_info = os.path.join(IMAGERY_PATH, id, 'ingest.task')
     os.mkdir(os.path.dirname(task_info))
+
+    if remote:
+        upload_file_path = '/vsicurl/{}'.format(upload_file_path)
 
     task = initialize_imagery(id, upload_file_path).apply_async()
 
@@ -144,8 +147,9 @@ def place_file(self, id, source_path):
             'status': 'Failed'
         }))
 
-    # delete original
-    os.unlink(source_path)
+    if not source_path.startswith(('/vsicurl', 'http://', 'https://')):
+        # delete original
+        os.unlink(source_path)
 
     return {
         'name': 'preprocess',
@@ -511,6 +515,18 @@ def upload_imagery():
     filename = app.config['UPLOADED_IMAGERY_DEST'] + imagery.save(request.files['file'])
 
     id = upload_file_handler(filename)
+
+    return redirect(url_for('get_imagery_metadata', id=id))
+
+
+@app.route('/imagery/ingest', methods=['POST', 'PUT'])
+def ingest_source():
+    if request.args.get('url') is None:
+        return jsonify({
+            'message': '"url" parameter is required.'
+        }), 400
+
+    id = upload_file_handler(request.args.get('url'), remote=True)
 
     return redirect(url_for('get_imagery_metadata', id=id))
 
