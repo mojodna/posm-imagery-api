@@ -66,7 +66,7 @@ configure_uploads(app, (imagery,))
 @tm.upload_file_handler
 def upload_file_handler(upload_file_path, filename=None):
     id = str(uuid.uuid4())
-    task_info = '{}/{}/ingest.task'.format(IMAGERY_PATH, id)
+    task_info = os.path.join(IMAGERY_PATH, id, 'ingest.task')
     os.mkdir(os.path.dirname(task_info))
 
     task = initialize_imagery(id, upload_file_path).apply_async()
@@ -91,10 +91,10 @@ def initialize_imagery(id, source_path):
 
 @celery.task(bind=True)
 def place_file(self, id, source_path):
-    target_dir = '{}/{}'.format(IMAGERY_PATH, id)
+    target_dir = os.path.join(IMAGERY_PATH, id)
     if not os.path.exists(target_dir):
         os.mkdir(target_dir)
-    output_file = '{}/index.tif'.format(target_dir)
+    output_file = os.path.join(target_dir, 'index.tif')
 
     # rewrite with gdal_translate
     gdal_translate = [
@@ -153,7 +153,7 @@ def place_file(self, id, source_path):
 
 @celery.task(bind=True)
 def create_metadata(self, id):
-    raster_path = '{}/{}/index.tif'.format(IMAGERY_PATH, id)
+    raster_path = os.path.join(IMAGERY_PATH, id, 'index.tif')
 
     started_at = datetime.utcnow()
     self.update_state(state='RUNNING',
@@ -185,7 +185,7 @@ def create_metadata(self, id):
                         'status': 'Writing metadata'
                       })
 
-    with open('{}/{}/index.json'.format(IMAGERY_PATH, id), 'w') as metadata:
+    with open(os.path.join(IMAGERY_PATH, id, 'index.json'), 'w') as metadata:
         metadata.write(json.dumps({
             'tilejson': '2.1.0',
             'name': id,
@@ -208,7 +208,7 @@ def create_metadata(self, id):
 
 @celery.task(bind=True)
 def create_overviews(self, id):
-    raster_path = '{}/{}/index.tif'.format(IMAGERY_PATH, id)
+    raster_path = os.path.join(IMAGERY_PATH, id, 'index.tif')
     # initialize Flask
     # TODO Celery's @worker_init.connect decorator _should_ work for this
     app.config['SERVER_NAME'] = SERVER_NAME
@@ -274,8 +274,8 @@ def create_overviews(self, id):
 
 @celery.task(bind=True)
 def create_warped_vrt(self, id):
-    raster_path = '{}/{}/index.tif'.format(IMAGERY_PATH, id)
-    vrt_path = '{}/{}/index.vrt'.format(IMAGERY_PATH, id)
+    raster_path = os.path.join(IMAGERY_PATH, id, 'index.tif')
+    vrt_path = os.path.join(IMAGERY_PATH, id, 'index.vrt')
     # initialize Flask
     # TODO Celery's @worker_init.connect decorator _should_ work for this
     app.config['SERVER_NAME'] = SERVER_NAME
@@ -346,7 +346,7 @@ def generate_mbtiles(self, id):
 
     meta = get_metadata(id)
 
-    output_path = './{}/{}/index.mbtiles'.format(IMAGERY_PATH, id)
+    output_path = os.path.join(IMAGERY_PATH, id, 'index.mbtiles')
 
     generate_cmd = [
         'tl',
@@ -399,7 +399,7 @@ def generate_mbtiles(self, id):
 
 @lru_cache()
 def get_metadata(id):
-    with open('{}/{}/index.json'.format(IMAGERY_PATH, id)) as metadata:
+    with open(os.path.join(IMAGERY_PATH, id, 'index.json')) as metadata:
         meta = json.load(metadata)
 
     with app.app_context():
@@ -433,7 +433,7 @@ def render_tile(meta, tile, scale=1):
     window = [[top - (top - (256 * y)), top - (top - ((256 * y) + int(256 * dy)))],
               [256 * x, (256 * x) + int(256 * dx)]]
 
-    src = get_source('{}/{}/index.vrt'.format(IMAGERY_PATH, meta['name']))
+    src = get_source(os.path.join(IMAGERY_PATH, meta['name'], 'index.vrt'))
     # use decimated reads to read from overviews, per https://github.com/mapbox/rasterio/issues/710
     data = np.empty(shape=(4, 256 * scale, 256 * scale)).astype(src.profile['dtype'])
     data = src.read(out=data, window=window)
@@ -539,7 +539,7 @@ def get_scaled_tile(id, z, x, y, scale):
 def get_mbtiles(id):
     return send_from_directory(
         IMAGERY_PATH,
-        '{}/index.mbtiles'.format(id),
+        os.path.join(id, 'index.mbtiles'),
         as_attachment=True,
         attachment_filename='{}.mbtiles'.format(id),
         conditional=True
@@ -551,8 +551,8 @@ def get_mbtiles(id):
 def request_mbtiles(id):
     meta = get_metadata(id)
 
-    task_info = '{}/{}/mbtiles.task'.format(IMAGERY_PATH, id)
-    mbtiles_archive = '{}/{}/index.mbtiles'.format(IMAGERY_PATH, id)
+    task_info = os.path.join(IMAGERY_PATH, id, 'mbtiles.task')
+    mbtiles_archive = os.path.join(IMAGERY_PATH, id, 'index.mbtiles')
 
     if os.path.exists(mbtiles_archive):
         return jsonify({
@@ -594,9 +594,9 @@ def serialize_status(task_id):
     return jsonify(status)
 
 
-@app.route('/imagery/<id>/mbtiles/status', methods=['GET'])
+@app.route('/imagery/<id>/mbtiles/status')
 def get_mbtiles_status(id):
-    task_info = '{}/{}/mbtiles.task'.format(IMAGERY_PATH, id)
+    task_info = os.path.join(IMAGERY_PATH, id, 'mbtiles.task')
 
     with open(task_info) as t:
         task_id = t.read()
@@ -606,7 +606,7 @@ def get_mbtiles_status(id):
 
 @app.route('/imagery/<id>/ingest/status', methods=['GET'])
 def get_ingestion_status(id):
-    task_info = '{}/{}/ingest.task'.format(IMAGERY_PATH, id)
+    task_info = os.path.join(IMAGERY_PATH, id, 'ingest.task')
 
     with open(task_info) as t:
         task_id = t.read()
