@@ -495,7 +495,7 @@ def handle_ioerror(error):
     return '', 404
 
 
-@app.route('/imagery', methods=['GET'])
+@app.route('/imagery')
 def list_imagery():
     """List available imagery"""
     sources = os.listdir(IMAGERY_PATH)
@@ -511,13 +511,13 @@ def upload_imagery():
     return redirect(url_for('get_imagery_metadata', id=id))
 
 
-@app.route('/imagery/<id>', methods=['GET'])
+@app.route('/imagery/<id>')
 def get_imagery_metadata(id):
     """Get imagery metadata"""
     return jsonify(get_metadata(id)), 200
 
 
-@app.route('/imagery/<id>/<int:z>/<int:x>/<int:y>.png', methods=['GET'])
+@app.route('/imagery/<id>/<int:z>/<int:x>/<int:y>.png')
 def get_tile(id, z, x, y):
     tile = read_tile(id, Tile(x, y, z))
 
@@ -526,7 +526,7 @@ def get_tile(id, z, x, y):
     }
 
 
-@app.route('/imagery/<id>/<int:z>/<int:x>/<int:y>@<int:scale>x.png', methods=['GET'])
+@app.route('/imagery/<id>/<int:z>/<int:x>/<int:y>@<int:scale>x.png')
 def get_scaled_tile(id, z, x, y, scale):
     tile = read_tile(id, Tile(x, y, z), scale=scale)
 
@@ -535,7 +535,7 @@ def get_scaled_tile(id, z, x, y, scale):
     }
 
 
-@app.route('/imagery/<id>/mbtiles', methods=['GET'])
+@app.route('/imagery/<id>/mbtiles')
 def get_mbtiles(id):
     return send_from_directory(
         IMAGERY_PATH,
@@ -604,7 +604,7 @@ def get_mbtiles_status(id):
     return serialize_status(task_id), 200
 
 
-@app.route('/imagery/<id>/ingest/status', methods=['GET'])
+@app.route('/imagery/<id>/ingest/status')
 def get_ingestion_status(id):
     task_info = os.path.join(IMAGERY_PATH, id, 'ingest.task')
 
