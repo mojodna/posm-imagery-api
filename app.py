@@ -377,7 +377,7 @@ def generate_mbtiles(self, id):
 
     meta = get_metadata(id)
 
-    output_path = os.path.join(IMAGERY_PATH, id, 'index.mbtiles')
+    output_path = os.path.abspath(os.path.join(IMAGERY_PATH, id, 'index.mbtiles'))
 
     generate_cmd = [
         'tl',
