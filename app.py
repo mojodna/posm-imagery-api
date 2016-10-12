@@ -549,11 +549,11 @@ class InvalidTileRequest(Exception):
 
 @rr_cache()
 def read_tile(id, tile, scale=1):
-    # TODO limit to some number of zooms beneath approximateZoom
-    if not MIN_ZOOM <= tile.z <= MAX_ZOOM:
-        raise InvalidTileRequest('Invalid zoom: {} outside [{}, {}]'.format(tile.z, MIN_ZOOM, MAX_ZOOM))
-
     meta = get_metadata(id)
+
+    # TODO limit to some number of zooms beneath approximateZoom
+    if not meta['meta']['approximateZoom'] - 5 <= tile.z <= MAX_ZOOM:
+        raise InvalidTileRequest('Invalid zoom: {} outside [{}, {}]'.format(tile.z, MIN_ZOOM, MAX_ZOOM))
 
     sw = mercantile.tile(*meta['bounds'][0:2], zoom=tile.z)
     ne = mercantile.tile(*meta['bounds'][2:4], zoom=tile.z)
