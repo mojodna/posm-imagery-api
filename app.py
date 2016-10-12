@@ -19,7 +19,7 @@ from mercantile import Tile
 import numpy as np
 from PIL import Image
 import rasterio
-from rasterio.warp import transform_bounds
+from rasterio.warp import calculate_default_transform, transform_bounds
 from werkzeug.wsgi import DispatcherMiddleware
 
 
