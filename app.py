@@ -453,6 +453,26 @@ def generate_mbtiles(self, id):
     }
 
 
+def fetch_ingestion_status(id):
+    task_info_path = os.path.join(IMAGERY_PATH, id, 'ingest.task')
+
+    if os.path.exists(task_info_path):
+        with open(task_info_path) as t:
+            tasks = json.load(t)
+
+        return fetch_status(tasks)
+
+
+def fetch_mbtiles_status(id):
+    task_info_path = os.path.join(IMAGERY_PATH, id, 'mbtiles.task')
+
+    if os.path.exists(task_info_path):
+        with open(task_info_path) as t:
+            tasks = json.load(t)
+
+        return fetch_status(tasks)
+
+
 def get_metadata(id):
     with open(os.path.join(IMAGERY_PATH, id, 'index.json')) as metadata:
         meta = json.load(metadata)
@@ -461,6 +481,21 @@ def get_metadata(id):
         meta['tiles'] = [
             '{}/{{z}}/{{x}}/{{y}}.png'.format(url_for('get_imagery_metadata', id=id, _external=True))
         ]
+
+    ingest_status = fetch_ingestion_status(id)
+    mbtiles_status = fetch_mbtiles_status(id)
+    meta['meta'] = meta.get('meta', {})
+    meta['meta']['status'] = meta['meta'].get('status', {})
+
+    if ingest_status:
+        meta['meta']['status']['ingest'] = ingest_status
+    else:
+        meta['meta']['status']['ingest'] = {}
+
+    if mbtiles_status:
+        meta['meta']['status']['mbtiles'] = mbtiles_status
+    else:
+        meta['meta']['status']['mbtiles'] = {}
 
     return meta
 
@@ -554,7 +589,9 @@ def handle_ioerror(error):
 @app.route('/imagery')
 def list_imagery():
     """List available imagery"""
-    sources = os.listdir(IMAGERY_PATH)
+    sources = dict(map(lambda source: (source, get_metadata(source)), filter(
+        lambda source: os.path.isdir(os.path.join(IMAGERY_PATH, source)), os.listdir(IMAGERY_PATH))))
+
     return jsonify(sources), 200
 
 
@@ -660,13 +697,15 @@ def serialize_status(task_ids):
         else:
             info = result.info
 
+        info = info or {}
+
         info['state'] = result.state
 
         status['steps'].append(info)
 
     status['state'] = min(states)
 
-    return jsonify(status)
+    return status
 
 
 @app.route('/imagery/<id>/mbtiles/status')
@@ -676,7 +715,7 @@ def get_mbtiles_status(id):
     with open(task_info) as t:
         tasks = json.load(t)
 
-    return serialize_status(tasks), 200
+    return jsonify(fetch_status(tasks)), 200
 
 
 @app.route('/imagery/<id>/ingest/status')
@@ -686,7 +725,7 @@ def get_ingestion_status(id):
     with open(task_info) as t:
         tasks = json.load(t)
 
-    return serialize_status(tasks), 200
+    return jsonify(fetch_status(tasks)), 200
 
 
 app.wsgi_app = DispatcherMiddleware(None, {
