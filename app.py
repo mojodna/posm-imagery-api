@@ -680,7 +680,21 @@ def request_mbtiles(id):
     }
 
 
-def serialize_status(task_ids):
+@app.route('/projects/<id>/mbtiles', methods=['DELETE'])
+def cancel_mbtiles(id):
+    task_info = os.path.join(IMAGERY_PATH, id, 'mbtiles.task')
+
+    with open(task_info) as t:
+        tasks = json.loads(t)
+
+    for task_id in tasks:
+        celery.control.revoke(task_id, terminate=True)
+
+    return '', 201
+
+
+
+def fetch_status(task_ids):
     status = {
         'steps': []
     }
