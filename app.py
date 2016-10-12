@@ -108,7 +108,8 @@ def initialize_imagery(id, source_path):
     return chain(
         place_file.si(id, source_path),
         create_metadata.si(id),
-        group(create_overviews.si(id), create_warped_vrt.si(id))
+        group(create_overviews.si(id), create_warped_vrt.si(id)),
+        update_metadata.si(id),
     )
 
 
@@ -175,6 +176,29 @@ def place_file(self, id, source_path):
 
 
 @celery.task(bind=True)
+def update_metadata(self, id):
+    started_at = datetime.utcnow()
+    meta = get_metadata(id)
+
+    meta['meta']['status'].update({
+        'ingest': {
+            'state': 'SUCCESS',
+        }
+    })
+
+    # TODO extract into save_metadata
+    with open(os.path.join(IMAGERY_PATH, id, 'index.json'), 'w') as metadata:
+        metadata.write(json.dumps(meta))
+
+    return {
+        'name': 'update-metadata',
+        'completed_at': datetime.utcnow().isoformat(),
+        'started_at': started_at,
+        'status': 'Metadata updating completed'
+    }
+
+
+@celery.task(bind=True)
 def create_metadata(self, id):
     raster_path = os.path.join(IMAGERY_PATH, id, 'index.tif')
 
@@ -213,6 +237,9 @@ def create_metadata(self, id):
             'tilejson': '2.1.0',
             'name': id,
             'bounds': bounds,
+            # TODO use overview calculation to pick an appropriate value for this
+            'minzoom': zoom - 5,
+            'maxzoom': MAX_ZOOM,
             'meta': {
                 'approximateZoom': zoom,
                 'bandCount': bandCount,
