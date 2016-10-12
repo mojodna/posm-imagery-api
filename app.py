@@ -212,11 +212,12 @@ def create_metadata(self, id):
 
     with rasterio.drivers():
         with rasterio.open(raster_path) as src:
+            # construct an affine transform w/ units in web mercator "meters"
+            affine, _, _ = calculate_default_transform(src.crs, 'epsg:3857',
+                src.width, src.height, *src.bounds, resolution=None)
+
             # grab the lowest resolution dimension
-            # NOTE: this assumes that units are in meters
-            # see https://github.com/openterrain/spark-chunker/blob/master/gglp/get_zoom.py for an
-            # alternative that may handle 4326-projected files better
-            resolution = max(abs(src.affine[0]), abs(src.affine[4]))
+            resolution = max(abs(affine[0]), abs(affine[4]))
 
             zoom = int(math.ceil(math.log((2 * math.pi * 6378137) /
                                           (resolution * 256)) / math.log(2)))
