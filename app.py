@@ -700,7 +700,11 @@ def fetch_status(task_ids):
         states.append(result.state)
 
         if isinstance(result.info, Exception):
-            info = json.loads(result.info.message)
+            try:
+                info = json.loads(result.info.message)
+            except ValueError:
+                print(result.info)
+                pass
         else:
             info = result.info
 
