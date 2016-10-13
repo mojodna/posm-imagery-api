@@ -31,7 +31,7 @@ CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', REDIS_URL)
 IMAGERY_PATH = os.environ.get('IMAGERY_PATH', 'imagery')
 MIN_ZOOM = int(os.environ.get('MIN_ZOOM', 0))
 MAX_ZOOM = int(os.environ.get('MAX_ZOOM', 22))
-SERVER_NAME = os.environ.get('SERVER_NAME', 'localhost:8000')
+SERVER_NAME = os.environ.get('SERVER_NAME', None)
 USE_X_SENDFILE = os.environ.get('USE_X_SENDFILE', False)
 UPLOADED_IMAGERY_DEST = os.environ.get('UPLOADED_IMAGERY_DEST', 'uploads/')
 
@@ -50,6 +50,7 @@ app.config['CELERY_BROKER_URL'] = CELERY_BROKER_URL
 app.config['CELERY_DEFAULT_QUEUE'] = CELERY_DEFAULT_QUEUE
 app.config['CELERY_RESULT_BACKEND'] = CELERY_RESULT_BACKEND
 app.config['CELERY_TRACK_STARTED'] = True
+app.config['SERVER_NAME'] = SERVER_NAME
 app.config['USE_X_SENDFILE'] = USE_X_SENDFILE
 app.config['UPLOADED_IMAGERY_DEST'] = UPLOADED_IMAGERY_DEST
 
@@ -262,9 +263,6 @@ def create_metadata(self, id):
 @celery.task(bind=True)
 def create_overviews(self, id):
     raster_path = os.path.abspath(os.path.join(IMAGERY_PATH, id, 'index.tif'))
-    # initialize Flask
-    # TODO Celery's @worker_init.connect decorator _should_ work for this
-    app.config['SERVER_NAME'] = SERVER_NAME
     meta = get_metadata(id)
     approximate_zoom = meta['meta']['approximateZoom']
     height = meta['meta']['height']
@@ -334,9 +332,6 @@ def create_overviews(self, id):
 def create_warped_vrt(self, id):
     raster_path = os.path.abspath(os.path.join(IMAGERY_PATH, id, 'index.tif'))
     vrt_path = os.path.abspath(os.path.join(IMAGERY_PATH, id, 'index.vrt'))
-    # initialize Flask
-    # TODO Celery's @worker_init.connect decorator _should_ work for this
-    app.config['SERVER_NAME'] = SERVER_NAME
     meta = get_metadata(id)
     approximate_zoom = meta['meta']['approximateZoom']
 
@@ -396,10 +391,6 @@ def create_warped_vrt(self, id):
 @celery.task(bind=True)
 def generate_mbtiles(self, id):
     """Generate an MBTiles archive for a given style."""
-
-    # initialize Flask
-    # TODO Celery's @worker_init.connect decorator _should_ work for this
-    app.config['SERVER_NAME'] = SERVER_NAME
 
     meta = get_metadata(id)
 
@@ -479,10 +470,9 @@ def get_metadata(id):
     with open(os.path.join(IMAGERY_PATH, id, 'index.json')) as metadata:
         meta = json.load(metadata)
 
-    with app.app_context():
-        meta['tiles'] = [
-            '{}/{{z}}/{{x}}/{{y}}.png'.format(url_for('get_imagery_metadata', id=id, _external=True))
-        ]
+    meta['tiles'] = [
+        '{}/{{z}}/{{x}}/{{y}}.png'.format(url_for('get_imagery_metadata', id=id, _external=True))
+    ]
 
     ingest_status = fetch_ingestion_status(id)
     mbtiles_status = fetch_mbtiles_status(id)
