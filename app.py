@@ -120,7 +120,7 @@ def place_file(self, id, source_path):
     target_dir = os.path.join(IMAGERY_PATH, id)
     if not os.path.exists(target_dir):
         os.mkdir(target_dir)
-    output_file = os.path.join(target_dir, 'index.tif')
+    output_file = os.path.abspath(os.path.join(target_dir, 'index.tif'))
 
     # rewrite with gdal_translate
     gdal_translate = [
@@ -261,7 +261,7 @@ def create_metadata(self, id):
 
 @celery.task(bind=True)
 def create_overviews(self, id):
-    raster_path = os.path.join(IMAGERY_PATH, id, 'index.tif')
+    raster_path = os.path.abspath(os.path.join(IMAGERY_PATH, id, 'index.tif'))
     # initialize Flask
     # TODO Celery's @worker_init.connect decorator _should_ work for this
     app.config['SERVER_NAME'] = SERVER_NAME
@@ -332,8 +332,8 @@ def create_overviews(self, id):
 
 @celery.task(bind=True)
 def create_warped_vrt(self, id):
-    raster_path = os.path.join(IMAGERY_PATH, id, 'index.tif')
-    vrt_path = os.path.join(IMAGERY_PATH, id, 'index.vrt')
+    raster_path = os.path.abspath(os.path.join(IMAGERY_PATH, id, 'index.tif'))
+    vrt_path = os.path.abspath(os.path.join(IMAGERY_PATH, id, 'index.vrt'))
     # initialize Flask
     # TODO Celery's @worker_init.connect decorator _should_ work for this
     app.config['SERVER_NAME'] = SERVER_NAME
