@@ -470,9 +470,10 @@ def get_metadata(id):
     with open(os.path.join(IMAGERY_PATH, id, 'index.json')) as metadata:
         meta = json.load(metadata)
 
-    meta['tiles'] = [
-        '{}/{{z}}/{{x}}/{{y}}.png'.format(url_for('get_imagery_metadata', id=id, _external=True))
-    ]
+    with app.app_context():
+        meta['tiles'] = [
+            '{}/{{z}}/{{x}}/{{y}}.png'.format(url_for('get_imagery_metadata', id=id, _external=True))
+        ]
 
     ingest_status = fetch_ingestion_status(id)
     mbtiles_status = fetch_mbtiles_status(id)
