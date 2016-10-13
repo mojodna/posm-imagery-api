@@ -122,6 +122,7 @@ list_routes`.
 * `MIN_ZOOM` - Minimum zoom served up by the tile server. Defaults to `0`.
 * `MAX_ZOOM` - Maximum zoom served up by the tile server. Defaults to `22`.
 * `CELERY_BROKER_URL` - Celery broker URL. Defaults to the value of `REDIS_URL`.
+* `CELERY_DEFAULT_QUEUE` - Default queue name. Defaults to `posm-imagery-api`.
 * `CELERY_RESULT_BACKEND` - Celery result backend URL. Defaults to the value of `REDIS_URL`.
 * `REDIS_URL` - Flask-Tus backend. Defaults to `redis://` (`localhost`, default port, default
   database).

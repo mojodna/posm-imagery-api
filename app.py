@@ -26,6 +26,7 @@ from werkzeug.wsgi import DispatcherMiddleware
 APPLICATION_ROOT = os.environ.get('APPLICATION_ROOT', '')
 REDIS_URL = os.environ.get('REDIS_URL', 'redis://')
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', REDIS_URL)
+CELERY_DEFAULT_QUEUE = os.environ.get('CELERY_DEFAULT_QUEUE', 'posm-imagery-api')
 CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', REDIS_URL)
 IMAGERY_PATH = os.environ.get('IMAGERY_PATH', 'imagery')
 MIN_ZOOM = int(os.environ.get('MIN_ZOOM', 0))
@@ -46,6 +47,7 @@ app = Flask('posm-imagery-api')
 CORS(app)
 app.config['APPLICATION_ROOT'] = APPLICATION_ROOT
 app.config['CELERY_BROKER_URL'] = CELERY_BROKER_URL
+app.config['CELERY_DEFAULT_QUEUE'] = CELERY_DEFAULT_QUEUE
 app.config['CELERY_RESULT_BACKEND'] = CELERY_RESULT_BACKEND
 app.config['CELERY_TRACK_STARTED'] = True
 app.config['USE_X_SENDFILE'] = USE_X_SENDFILE
