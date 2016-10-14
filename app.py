@@ -113,6 +113,7 @@ def initialize_imagery(id, source_path):
         create_metadata.si(id),
         group(create_overviews.si(id), create_warped_vrt.si(id)),
         update_metadata.si(id),
+        cleanup_ingestion.si(id),
     )
 
 
@@ -198,6 +199,22 @@ def update_metadata(self, id):
         'completed_at': datetime.utcnow().isoformat(),
         'started_at': started_at,
         'status': 'Metadata updating completed'
+    }
+
+
+@celery.task(bind=True)
+def cleanup_ingestion(self, id):
+    started_at = datetime.utcnow()
+    task_info_path = os.path.join(IMAGERY_PATH, id, 'ingest.task')
+
+    if os.path.exists(task_info_path):
+        os.unlink(task_info_path)
+
+    return {
+        'name': 'cleanup',
+        'completed_at': datetime.utcnow().isoformat(),
+        'started_at': started_at,
+        'status': 'Cleanup completed'
     }
 
 
@@ -438,6 +455,23 @@ def generate_mbtiles(self, id):
             'return_code': returncode,
             'status': 'Failed'
         }))
+
+    # update metadata
+    meta['meta']['status'].update({
+        'mbtiles': {
+            'state': 'SUCCESS',
+        }
+    })
+
+    # TODO extract into save_metadata
+    with open(os.path.join(IMAGERY_PATH, id, 'index.json'), 'w') as metadata:
+        metadata.write(json.dumps(meta))
+
+    # delete task tracking info
+    task_info_path = os.path.join(IMAGERY_PATH, id, 'mbtiles.task')
+
+    if os.path.exists(task_info_path):
+        os.unlink(task_info_path)
 
     return {
         'completed_at': datetime.utcnow().isoformat(),
