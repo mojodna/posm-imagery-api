@@ -737,8 +737,8 @@ def fetch_status(task_ids):
             try:
                 info = json.loads(result.info.message)
             except ValueError:
-                print(result.info)
-                pass
+                # this happened, let's see if we can figure out why
+                raise result.info
         else:
             info = result.info
 
