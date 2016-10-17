@@ -516,13 +516,9 @@ def get_metadata(id):
 
     if ingest_status:
         meta['meta']['status']['ingest'] = ingest_status
-    else:
-        meta['meta']['status']['ingest'] = {}
 
     if mbtiles_status:
         meta['meta']['status']['mbtiles'] = mbtiles_status
-    else:
-        meta['meta']['status']['mbtiles'] = {}
 
     return meta
 
