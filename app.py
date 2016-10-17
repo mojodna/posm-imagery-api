@@ -513,6 +513,8 @@ def get_metadata(id):
     mbtiles_status = fetch_mbtiles_status(id)
     meta['meta'] = meta.get('meta', {})
     meta['meta']['status'] = meta['meta'].get('status', {})
+    meta['meta']['status']['ingest'] = meta['meta']['status'].get('ingest', {})
+    meta['meta']['status']['mbtiles'] = meta['meta']['status'].get('mbtiles', {})
 
     if ingest_status:
         meta['meta']['status']['ingest'] = ingest_status
