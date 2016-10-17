@@ -757,20 +757,30 @@ def fetch_status(task_ids):
 def get_mbtiles_status(id):
     task_info = os.path.join(IMAGERY_PATH, id, 'mbtiles.task')
 
-    with open(task_info) as t:
-        tasks = json.load(t)
+    if os.path.exists(task_info):
+        with open(task_info) as t:
+            tasks = json.load(t)
 
-    return jsonify(fetch_status(tasks)), 200
+        return jsonify(fetch_status(tasks)), 200
+
+    else:
+        meta = get_metadata(id)
+        return jsonify(meta['meta']['status']['mbtiles']), 200
 
 
 @app.route('/imagery/<id>/ingest/status')
 def get_ingestion_status(id):
     task_info = os.path.join(IMAGERY_PATH, id, 'ingest.task')
 
-    with open(task_info) as t:
-        tasks = json.load(t)
+    if os.path.exists(task_info):
+        with open(task_info) as t:
+            tasks = json.load(t)
 
-    return jsonify(fetch_status(tasks)), 200
+        return jsonify(fetch_status(tasks)), 200
+
+    else:
+        meta = get_metadata(id)
+        return jsonify(meta['meta']['status']['ingest']), 200
 
 
 app.wsgi_app = DispatcherMiddleware(None, {
