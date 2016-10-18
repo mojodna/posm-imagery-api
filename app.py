@@ -190,9 +190,7 @@ def update_metadata(self, id):
         }
     })
 
-    # TODO extract into save_metadata
-    with open(os.path.join(IMAGERY_PATH, id, 'index.json'), 'w') as metadata:
-        metadata.write(json.dumps(meta))
+    save_metadata(id, meta)
 
     return {
         'name': 'update-metadata',
@@ -463,9 +461,7 @@ def generate_mbtiles(self, id):
         }
     })
 
-    # TODO extract into save_metadata
-    with open(os.path.join(IMAGERY_PATH, id, 'index.json'), 'w') as metadata:
-        metadata.write(json.dumps(meta))
+    save_metadata(id, meta)
 
     # delete task tracking info
     task_info_path = os.path.join(IMAGERY_PATH, id, 'mbtiles.task')
@@ -523,6 +519,11 @@ def get_metadata(id):
         meta['meta']['status']['mbtiles'] = mbtiles_status
 
     return meta
+
+
+def save_metadata(id, metadata):
+    with open(os.path.join(IMAGERY_PATH, id, 'index.json'), 'w') as metadata_file:
+        metadata_file.write(json.dumps(metadata))
 
 
 @lru_cache()
@@ -647,6 +648,22 @@ def ingest_source():
 def get_imagery_metadata(id):
     """Get imagery metadata"""
     return jsonify(get_metadata(id)), 200
+
+
+@app.route('/imagery/<id>', methods=['PATCH', 'POST'])
+def update_source(id):
+    body = request.get_json(force=True)
+
+    metadata = get_metadata(id)
+
+    if request.method == 'PATCH':
+        metadata['meta']['user'].update(body)
+    else:
+        metadata['meta']['user'] = body
+
+    save_metadata(id, metadata)
+
+    return jsonify(metadata), 200
 
 
 @app.route('/imagery/<id>/<int:z>/<int:x>/<int:y>.png')
