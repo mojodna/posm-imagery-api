@@ -247,7 +247,8 @@ def create_metadata(self, id):
             bounds = transform_bounds(src.crs, {'init': 'epsg:4326'}, *src.bounds)
             bandCount = src.count
 
-    self.update_state(meta={
+    self.update_state(state='RUNNING',
+                      meta={
                         'name': 'metadata',
                         'started_at': started_at.isoformat(),
                         'status': 'Writing metadata'
