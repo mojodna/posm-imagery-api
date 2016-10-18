@@ -9,7 +9,7 @@ import os
 import uuid
 
 from cachetools.func import lru_cache, rr_cache
-from celery import Celery, chain, group, states
+from celery import Celery, chain, chord, states
 from flask import Flask, redirect, request, send_from_directory, jsonify, url_for
 from flask_cors import CORS
 from flask_uploads import UploadSet, configure_uploads
@@ -111,9 +111,12 @@ def initialize_imagery(id, source_path):
     return chain(
         place_file.si(id, source_path),
         create_metadata.si(id),
-        group(create_overviews.si(id), create_warped_vrt.si(id)),
-        update_metadata.si(id),
-        cleanup_ingestion.si(id),
+        chord([create_overviews.si(id), create_warped_vrt.si(id)],
+              chain(
+                update_metadata.si(id),
+                cleanup_ingestion.si(id),
+              )
+        ),
     )
 
 
