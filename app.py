@@ -626,7 +626,9 @@ def upload_imagery():
 
     id = upload_file_handler(filename)
 
-    return redirect(url_for('get_imagery_metadata', id=id))
+    return jsonify({
+        'source': url_for('get_imagery_metadata', id=id),
+    }), 200
 
 
 @app.route('/imagery/ingest', methods=['POST', 'PUT'])
