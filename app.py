@@ -98,11 +98,10 @@ def upload_file_handler(upload_file_path, filename=None, remote=False):
     with open(task_info, 'w') as f:
         f.write(json.dumps(tasks))
 
-    with open(os.path.join(IMAGERY_PATH, id, 'index.json'), 'w') as metadata:
-        metadata.write(json.dumps({
-            'tilejson': '2.1.0',
-            'name': id,
-        }))
+    save_metadata(id, {
+        'tilejson': '2.1.0',
+        'name': id,
+    })
 
     return id
 
