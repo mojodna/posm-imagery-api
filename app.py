@@ -514,6 +514,7 @@ def get_metadata(id):
     meta['meta']['status'] = meta['meta'].get('status', {})
     meta['meta']['status']['ingest'] = meta['meta']['status'].get('ingest', {})
     meta['meta']['status']['mbtiles'] = meta['meta']['status'].get('mbtiles', {})
+    meta['meta']['user'] = meta['meta'].get('user', {})
 
     if ingest_status:
         meta['meta']['status']['ingest'] = ingest_status
