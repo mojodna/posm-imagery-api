@@ -652,7 +652,10 @@ def ingest_source():
 
     id = upload_file_handler(request.args.get('url'), remote=True)
 
-    return redirect(url_for('get_imagery_metadata', id=id))
+    with app.app_context():
+        return jsonify({
+            'source': url_for('get_imagery_metadata', id=id, _external=True),
+        }), 200
 
 
 @app.route('/imagery/<id>')
