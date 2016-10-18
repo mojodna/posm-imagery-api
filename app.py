@@ -254,21 +254,27 @@ def create_metadata(self, id):
                         'status': 'Writing metadata'
                       })
 
-    with open(os.path.join(IMAGERY_PATH, id, 'index.json'), 'w') as metadata:
-        metadata.write(json.dumps({
-            'tilejson': '2.1.0',
-            'name': id,
-            'bounds': bounds,
-            # TODO use overview calculation to pick an appropriate value for this
-            'minzoom': zoom - 5,
-            'maxzoom': MAX_ZOOM,
-            'meta': {
-                'approximateZoom': zoom,
-                'bandCount': bandCount,
-                'width': width,
-                'height': height
-            }
-        }))
+    metadata = get_metadata(id)
+
+    meta = metadata['meta']
+    meta.update({
+        'approximateZoom': zoom,
+        'bandCount': bandCount,
+        'width': width,
+        'height': height,
+    })
+
+    metadata.update({
+        'tilejson': '2.1.0',
+        'name': id,
+        'bounds': bounds,
+        # TODO use overview calculation to pick an appropriate value for this
+        'minzoom': zoom - 5,
+        'maxzoom': MAX_ZOOM,
+        'meta': meta,
+    })
+
+    save_metadata(id, metadata)
 
     return {
         'name': 'metadata',
