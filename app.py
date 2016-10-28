@@ -230,22 +230,29 @@ def create_metadata(self, id):
                         'status': 'Reading metadata from imagery'
                       })
 
-    with rasterio.drivers():
-        with rasterio.open(raster_path) as src:
-            # construct an affine transform w/ units in web mercator "meters"
-            affine, _, _ = calculate_default_transform(src.crs, 'epsg:3857',
-                src.width, src.height, *src.bounds, resolution=None)
+    try:
+        with rasterio.drivers():
+            with rasterio.open(raster_path) as src:
+                # construct an affine transform w/ units in web mercator "meters"
+                affine, _, _ = calculate_default_transform(src.crs, 'epsg:3857',
+                    src.width, src.height, *src.bounds, resolution=None)
 
-            # grab the lowest resolution dimension
-            resolution = max(abs(affine[0]), abs(affine[4]))
+                # grab the lowest resolution dimension
+                resolution = max(abs(affine[0]), abs(affine[4]))
 
-            zoom = int(math.ceil(math.log((2 * math.pi * 6378137) /
-                                          (resolution * 256)) / math.log(2)))
-            width = src.width
-            height = src.height
+                zoom = int(math.ceil(math.log((2 * math.pi * 6378137) /
+                                              (resolution * 256)) / math.log(2)))
+                width = src.width
+                height = src.height
 
-            bounds = transform_bounds(src.crs, {'init': 'epsg:4326'}, *src.bounds)
-            bandCount = src.count
+                bounds = transform_bounds(src.crs, {'init': 'epsg:4326'}, *src.bounds)
+                bandCount = src.count
+    except Exception as err:
+        raise Exception(json.dumps({
+            'name': 'metadata',
+            'started_at': started_at.isoformat(),
+            'error': str(err),
+        }))
 
     self.update_state(state='RUNNING',
                       meta={
