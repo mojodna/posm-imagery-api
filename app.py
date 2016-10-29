@@ -218,6 +218,11 @@ def cleanup_ingestion(self, id):
     }
 
 
+def get_zoom_offset(width, height, approximate_zoom):
+    return len([x for x in range(approximate_zoom)
+                if (height / (2 ** (x + 1))) >= 1 and (width / (2 ** (x + 1))) >= 1])
+
+
 @celery.task(bind=True)
 def create_metadata(self, id):
     raster_path = os.path.join(IMAGERY_PATH, id, 'index.tif')
@@ -275,8 +280,7 @@ def create_metadata(self, id):
         'tilejson': '2.1.0',
         'name': id,
         'bounds': bounds,
-        # TODO use overview calculation to pick an appropriate value for this
-        'minzoom': zoom - 5,
+        'minzoom': zoom - get_zoom_offset(width, height, zoom),
         'maxzoom': MAX_ZOOM,
         'meta': meta,
     })
@@ -314,13 +318,13 @@ def create_overviews(self, id):
         raster_path,
     ]
 
-    # generate a list of overview values
-    for x in range(approximate_zoom):
-        h = height / (2 ** (x + 1))
-        w = width / (2 ** (x + 1))
-
-        if h > 1 and w > 1:
-            gdaladdo.append(str(2 ** (x + 1)))
+    # generate a list of overview values (where images are > 1x1)
+    overview_levels = [str(2 ** (x + 1)) for x in range(get_zoom_offset(
+        width,
+        height,
+        approximate_zoom
+    ))]
+    gdaladdo.extend(overview_levels)
 
     started_at = datetime.utcnow()
 
@@ -427,14 +431,18 @@ def generate_mbtiles(self, id):
 
     output_path = os.path.abspath(os.path.join(IMAGERY_PATH, id, 'index.mbtiles'))
 
+    approximate_zoom = meta['meta']['approximateZoom']
+    bounds = meta['bounds']
+    height = meta['meta']['height']
+    width = meta['meta']['width']
+
     generate_cmd = [
         'tl',
         'copy',
         '-q',
-        '-b', ' '.join(map(str, meta['bounds'])),
-        # TODO the delta here matches the number of overviews that should be produced, so those codepaths can be centralized and simplified
-        '-z', str(meta['meta']['approximateZoom'] - 10),
-        '-Z', str(meta['meta']['approximateZoom']),
+        '-b', ' '.join(map(str, bounds)),
+        '-z', str(approximate_zoom - get_zoom_offset(width, height, approximate_zoom)),
+        '-Z', str(approximate_zoom),
         meta['tiles'][0],
         'mbtiles://{}'.format(output_path)
     ]
@@ -593,13 +601,18 @@ class InvalidTileRequest(Exception):
 @rr_cache()
 def read_tile(id, tile, scale=1):
     meta = get_metadata(id)
+    approximate_zoom = meta['meta']['approximateZoom']
+    bounds = meta['bounds']
+    height = meta['meta']['height']
+    width = meta['meta']['width']
+    zoom_offset = get_zoom_offset(width, height, approximate_zoom)
+    min_zoom = approximate_zoom - zoom_offset
 
-    # TODO limit to some number of zooms beneath approximateZoom
-    if not meta['meta']['approximateZoom'] - 5 <= tile.z <= MAX_ZOOM:
-        raise InvalidTileRequest('Invalid zoom: {} outside [{}, {}]'.format(tile.z, MIN_ZOOM, MAX_ZOOM))
+    if not min_zoom <= tile.z <= MAX_ZOOM:
+        raise InvalidTileRequest('Invalid zoom: {} outside [{}, {}]'.format(tile.z, min_zoom, MAX_ZOOM))
 
-    sw = mercantile.tile(*meta['bounds'][0:2], zoom=tile.z)
-    ne = mercantile.tile(*meta['bounds'][2:4], zoom=tile.z)
+    sw = mercantile.tile(*bounds[0:2], zoom=tile.z)
+    ne = mercantile.tile(*bounds[2:4], zoom=tile.z)
 
     if not sw.x <= tile.x <= ne.x:
         raise InvalidTileRequest('Invalid x coordinate: {} outside [{}, {}]'.format(tile.x, sw.x, ne.x))
