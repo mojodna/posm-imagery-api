@@ -136,7 +136,6 @@ def place_file(self, id, source_path):
         '-co', 'PREDICTOR=2',
         '-co', 'BLOCKXSIZE=512',
         '-co', 'BLOCKYSIZE=512',
-        '-co', 'INTERLEAVE=band',
         '-co', 'NUM_THREADS=ALL_CPUS',
     ]
 
