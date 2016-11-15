@@ -46,17 +46,18 @@ if UPLOADED_IMAGERY_DEST[-1] != '/':
 app = Flask('posm-imagery-api')
 CORS(app)
 app.config['APPLICATION_ROOT'] = APPLICATION_ROOT
-app.config['CELERY_BROKER_URL'] = CELERY_BROKER_URL
-app.config['CELERY_DEFAULT_QUEUE'] = CELERY_DEFAULT_QUEUE
-app.config['CELERY_RESULT_BACKEND'] = CELERY_RESULT_BACKEND
-app.config['CELERY_TRACK_STARTED'] = True
 app.config['SERVER_NAME'] = SERVER_NAME
 app.config['USE_X_SENDFILE'] = USE_X_SENDFILE
 app.config['UPLOADED_IMAGERY_DEST'] = UPLOADED_IMAGERY_DEST
 
 # Initialize Celery
-celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
-celery.conf.update(app.config)
+celery = Celery(app.name, broker=CELERY_BROKER_URL)
+celery.conf.update({
+    'broker_url': CELERY_BROKER_URL,
+    'result_backend': CELERY_RESULT_BACKEND,
+    'task_default_queue': CELERY_DEFAULT_QUEUE,
+    'task_track_started': True
+})
 
 # Initialize Tus
 tm = tus_manager(app, upload_url='/imagery/upload',
