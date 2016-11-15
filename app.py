@@ -315,7 +315,6 @@ def create_overviews(self, id):
         '--config', 'BLOCKXSIZE_OVERVIEW', '512',
         '--config', 'BLOCKYSIZE_OVERVIEW', '512',
         '--config', 'NUM_THREADS_OVERVIEW', 'ALL_CPUS',
-        '-ro',
         raster_path,
     ]
 
