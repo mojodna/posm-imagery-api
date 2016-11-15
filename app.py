@@ -29,9 +29,11 @@ CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', REDIS_URL)
 CELERY_DEFAULT_QUEUE = os.environ.get('CELERY_DEFAULT_QUEUE', 'posm-imagery-api')
 CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', REDIS_URL)
 IMAGERY_PATH = os.environ.get('IMAGERY_PATH', 'imagery')
+MBTILES_TIMEOUT = int(os.environ.get('MBTILES_TIMEOUT', 60 * 60))
 MIN_ZOOM = int(os.environ.get('MIN_ZOOM', 0))
 MAX_ZOOM = int(os.environ.get('MAX_ZOOM', 22))
 SERVER_NAME = os.environ.get('SERVER_NAME', None)
+TASK_TIMEOUT = int(os.environ.get('TASK_TIMEOUT', 60 * 15))
 USE_X_SENDFILE = os.environ.get('USE_X_SENDFILE', False)
 UPLOADED_IMAGERY_DEST = os.environ.get('UPLOADED_IMAGERY_DEST', 'uploads/')
 
@@ -150,7 +152,7 @@ def place_file(self, id, source_path):
                       })
 
     try:
-        returncode = subprocess.call(gdal_translate, timeout=60*5)
+        returncode = subprocess.call(gdal_translate, timeout=TASK_TIMEOUT)
     except subprocess.TimeoutExpired as e:
         raise Exception(json.dumps({
             'name': 'preprocess',
@@ -335,7 +337,7 @@ def create_overviews(self, id):
                       })
 
     try:
-        returncode = subprocess.call(gdaladdo, timeout=60*5)
+        returncode = subprocess.call(gdaladdo, timeout=TASK_TIMEOUT)
     except subprocess.TimeoutExpired as e:
         raise Exception(json.dumps({
             'name': 'overviews',
@@ -395,7 +397,7 @@ def create_warped_vrt(self, id):
                       })
 
     try:
-        returncode = subprocess.call(gdalwarp, timeout=60*5)
+        returncode = subprocess.call(gdalwarp, timeout=TASK_TIMEOUT)
     except subprocess.TimeoutExpired as e:
         raise Exception(json.dumps({
             'name': 'warped-vrt',
@@ -456,7 +458,7 @@ def generate_mbtiles(self, id):
     print('Running {}'.format(' '.join(generate_cmd)))
 
     try:
-        returncode = subprocess.call(generate_cmd, timeout=60*60)
+        returncode = subprocess.call(generate_cmd, timeout=MBTILES_TIMEOUT)
     except subprocess.TimeoutExpired as e:
         raise Exception(json.dumps({
             'name': 'mbtiles',
