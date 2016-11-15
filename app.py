@@ -156,7 +156,6 @@ def place_file(self, id, source_path):
             'name': 'preprocess',
             'started_at': started_at.isoformat(),
             'command': ' '.join(gdal_translate),
-            'return_code': returncode,
             'status': 'Timed out'
         }))
 
@@ -342,7 +341,6 @@ def create_overviews(self, id):
             'name': 'overviews',
             'started_at': started_at.isoformat(),
             'command': ' '.join(gdaladdo),
-            'return_code': returncode,
             'status': 'Timed out'
         }))
 
@@ -403,7 +401,6 @@ def create_warped_vrt(self, id):
             'name': 'warped-vrt',
             'started_at': started_at.isoformat(),
             'command': ' '.join(gdalwarp),
-            'return_code': returncode,
             'status': 'Timed out'
         }))
 
@@ -465,7 +462,6 @@ def generate_mbtiles(self, id):
             'name': 'mbtiles',
             'started_at': started_at.isoformat(),
             'command': ' '.join(generate_cmd),
-            'return_code': returncode,
             'status': 'Timed out'
         }))
 
